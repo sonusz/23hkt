@@ -131,7 +131,38 @@ messages = [
                                "\n"
                                "In case of the user needs to get a complite list of all IPs for all service types, "
                                "you should return the following REST API query example: \n"
-                               "\"curl -k -X POST -d '{\"serviceType\": \"all\", \"addrType\": \"all\", \"location\": \"all\"}' -H \"header-api-key:<TOKEN>\" \"https://dev6.panclouddev.com/getPrismaAccessIP/v2\"")},
+                               "\"curl -k -X POST -d '{\"serviceType\": \"all\", \"addrType\": \"all\", \"location\": \"all\"}' -H \"header-api-key:<TOKEN>\" \"https://dev6.panclouddev.com/getPrismaAccessIP/v2\""
+                               
+                               "\n"
+                               "Here is an example response:\n"
+                               """
+{'address_details': # a list of items each contains more details of each IP in the 'addresses' list
+                    [{'address': '34.150.152.60', # The IP address of the object IP, you should be able to find the same IP in the 'addresses' list
+                      'addressType': 'active', # 'addressType' could be one of: 'active', 'pre_allocated', 'reserved'. 'active' means the IP is actively used by some service. 'pre_allocated' means the IP is allocated in a region that has no service type, described in the 'serviceType', deployed right now but can be used for future deployment. 'reserved' means the IP is allocated in a region that has the service type, described in the 'serviceType', deployed and can be used to deploy more capacities when auto-scale occurred.
+                      'allow_listed': False, # 'allow_list' could be one of: True, False. 'allow_list' only exists for serviceType 'gp_gateway'.
+                      'create_time': 1663197315, # 'create_time' is the Unix Timestamp.
+                      'serviceType': 'gp_gateway'}, # 'serviceType' could be one of: 'gp_gateway', 'swg_proxy', 'remote_network', 'gp_portal'.
+                     {'address': '34.94.188.214',
+                      'addressType': 'active',
+                      'node_name': ['hlong-branch'],
+                      'serviceType': 'remote_network'}],
+ 'address_details_v6': # a list of items each contains more details of each IPv6 in the 'addresses_v6' list
+                    [{'address': '2606:f4c0:26cc:11:8000:0:0:0/96', # The IPv6 address of the object IP, you should be able to find the same IPv6 in the 'addresses_v6' list
+                      'addressType': 'active', # 'addressType' in 'address_details_v6' should only be 'active'
+                      'create_time': 1681275916,
+                      'serviceType': 'gp_gateway'}],
+ 'addresses': ['34.150.152.60', '34.94.188.214'], # 'addresses' is a list of IPv4 addresses
+ 'addresses_v6': ['2606:f4c0:26cc:11:8000:0:0:0/96'], # 'addresses_v6' is a list of IPv6 addresses
+ 'zone': 'US East', # 'zone' describes the locations where these IPv4 and IPv6 are allocated.
+ 'zone_subnet': ['34.0.0.0/8'], # 'zone_subnet' is a list of IPv4 subnets. Each IPv4 address in 'addresses' should be in the subnet if 'zone_subnet' exists. 'zone_subnet' can be empty.
+ 'zone_subnet_v6': ['2606:f4c0:26cc:11::/64'], # 'zone_subnet_v6' is a list of IPv6 subnets and its CIDR is /64. Every IPv6 address in 'addresses_v6' must be under this /64 CIDR.
+ 'zone_subnet_v6_details': # a list of items each contains more details of each IPv6 subnet in the 'zone_subnet_v6' list
+                         [{'address': '2606:f4c0:26cc:11::/64', # The IPv6 subnet address of the object IP, you should be able to find the same IPv6 in the 'zone_subnet_v6' list
+                         'addressType': 'active', # 'addressType' in 'zone_subnet_v6_details' could be 'active' or 'pre_allocated'. 'active' means the IP is actively used by some service. 'pre_allocated' means the IP can be used for future deployment.
+                         'allow_listed': False}]} # 'allow_list' could be one of: True, False. Unlike item in 'address_details' that each IPv4 object has the field 'allow_listed'. In IPv6, item in 'address_details_v6' doesn't have the 'allow_listed' option but only 'zone_subnet_v6' object has the field 'allow_listed'.
+                               """
+                               "\n"
+                               "In case the customer is focusing on gp_gateway service type, you should remind customer to allow-list IPs that with allow_listed False.")},
 {"role": "system", "content": ("Now let's take a try.\n")},
 {"role": "user", "content": "How to get a list of IPs that we have configured for my services?"},
 {"role": "assistant", "content": ("To get a list of configured addresses for all services, you can try the following command: \n\n"
@@ -153,6 +184,29 @@ messages = [
                                "curl -k -X POST -d '{\"serviceType\": \"remote_network\", \"addrType\": \"all\", \"location\": \"all\"}' -H \"header-api-key:<TOKEN>\" \"https://dev6.panclouddev.com/getPrismaAccessIP/v2\" "
                                 "\n\n"
                                 "The above command will return all IP address in all locations for Remote Networks service. Please replate the <TOKEN> in the above command with your API token.")},
+{"role": "system", "content": "The user provided real token, please help the customer analysis the results: "},
+{"role": "system", "content": ""
+                              """
+[{'address_details': [{'address': '34.150.152.60',
+                                  'addressType': 'active',
+                                  'allow_listed': False,
+                                  'create_time': 1663197315,
+                                  'serviceType': 'gp_gateway'}],
+             'address_details_v6': [{'address': '2606:f4c0:26cc:11:8000:0:0:0/96',
+                                     'addressType': 'active',
+                                     'create_time': 1681275916,
+                                     'serviceType': 'gp_gateway'}
+],
+             'addresses': ['34.150.152.60'],
+             'addresses_v6': ['2606:f4c0:26cc:11:8000:0:0:0/96'],
+             'zone': 'US East',
+             'zone_subnet': [],
+             'zone_subnet_v6': ['2606:f4c0:26cc:11::/64'],
+             'zone_subnet_v6_details': [{'address': '2606:f4c0:26cc:11::/64',
+                                         'addressType': 'active',
+                                         'allow_listed': False}]}]
+                              """},
+{"role": "assistant", "content": ("The response shows you have one gp_gateway deployment. Please note, the IP '34.150.152.60' is still not marked as 'allow_listed'. Please make sure to allow the IPs in your allow-list to avoid auto-scale outage.")}
 
 ]
 

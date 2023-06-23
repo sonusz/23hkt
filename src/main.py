@@ -11,15 +11,23 @@ def api_helper(openai_model, user_input: str):
     messages.append({"role": "user", "content": user_input})
     response = openai_model.completion(messages, max_tokens=4000)
     messages.append({"role": "assistant", "content": response})
-    success, msg = exe_curl(messages)
-    if success is True:
-        print(messages[-1]["content"])
+    success, msg = exe_curl(messages, openai_model)
+    if success is True and not msg:
+        print(f'GPT: {messages[-1]["content"]}')
+    elif success is True and msg:
+        messages.append({"role": "assistant", "content": "Let me check ..."})
+        print(f'GPT: {messages[-1]["content"]}')
+        messages.append({"role": "system", "content": "The user provided real token, please help the customer analysis the results: "})
+        messages.append({"role": "system", "content": msg})
+        response = openai_model.completion(messages, max_tokens=4000)
+        messages.append({"role": "assistant", "content": response})
+        print(f'GPT: {messages[-1]["content"]}')
     else:
-        print("We are running into some issue, please try again later.")
+        print("System: We are running into some issue, please try again later.")
         return
 
 
-def exe_curl(messages):
+def exe_curl(messages, openai_model):
     success = False
     msg = ''
     try:
@@ -45,6 +53,8 @@ def exe_curl(messages):
                 sys_msg += "Correct the curl and return exactly the same as your previous response, only with the updated " \
                            "curl command and nothing else."
                 messages.append({"role": "system", "content": sys_msg})
+                response = openai_model.completion(messages, max_tokens=4000)
+                messages.append({"role": "assistant", "content": response})
             else:
                 success = True
                 break
@@ -56,9 +66,12 @@ def exe_curl(messages):
 
 def main():
     logger = logging.getLogger()
-    my_azure_gpt35 = GPCSAzureGPT3dot5TurboChat(logger=logger)
-    print("How can I help?")
+    my_azure_gpt35 = GPCSAzureGPT3dot5TurboChat(logger=logger, temperature=0.8)
+    welcome = "This is an AI agent to guide you use the getPrismaAccessIP API."
+    messages.append({"role": "assistant", "content": welcome})
+    print(f"GPT: {welcome}")
     while True:
+        print("You: ", end="")
         api_helper(my_azure_gpt35, input())
 
 if __name__ == '__main__':
