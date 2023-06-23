@@ -1,6 +1,7 @@
 import os
 import openai
 import traceback
+import sys
 
 
 class OpenAIBase():
@@ -46,6 +47,26 @@ class GPCSAzureGPT3dot5TurboChat(OpenAIBase):
                 temperature=self.temperature
             )
             response = _res['choices'][0]['message'].get('content', '')
+        except Exception as e:
+            self.logger.error(f'Exception in chat_response! {str(e)}, traceback: {traceback.format_exc()}')
+        finally:
+            return response
+
+
+    def stream_completion(self, messages: list, *args, **kwargs):
+        response = ''
+        try:
+            _res = openai.ChatCompletion.create(
+                deployment_id=self.deployment_id,
+                stream=True,
+                messages=messages,
+                temperature=self.temperature
+            )
+            for line in _res:
+                msg = line['choices'][0]['delta'].get('content', '')
+                print(msg, end="", flush=True)
+                sys.stdout.flush()
+                response += msg
         except Exception as e:
             self.logger.error(f'Exception in chat_response! {str(e)}, traceback: {traceback.format_exc()}')
         finally:

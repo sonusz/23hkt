@@ -1,19 +1,15 @@
 import traceback
 import logging
-from logger import init_logger
 from openai_agent import GPCSAzureGPT3dot5TurboChat
+from env import *
 
 from chat_hist import messages
 from chat_hist import functions
 from fact_check import curl_check
 
-logger = init_logger('UT', logging.INFO)
-my_azure_gpt35 = GPCSAzureGPT3dot5TurboChat(logger=logger)
-
-
-def api_helper(user_input: str):
+def api_helper(openai_model, user_input: str):
     messages.append({"role": "user", "content": user_input})
-    response = my_azure_gpt35.completion(messages, max_tokens=4000)
+    response = openai_model.completion(messages, max_tokens=4000)
     messages.append({"role": "assistant", "content": response})
     success, msg = exe_curl(messages)
     if success is True:
@@ -58,3 +54,12 @@ def exe_curl(messages):
     finally:
         return success, msg
 
+def main():
+    logger = logging.getLogger()
+    my_azure_gpt35 = GPCSAzureGPT3dot5TurboChat(logger=logger)
+    print("How can I help?")
+    while True:
+        api_helper(my_azure_gpt35, input())
+
+if __name__ == '__main__':
+    main()
