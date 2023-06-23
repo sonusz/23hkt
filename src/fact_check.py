@@ -4,6 +4,7 @@ import subprocess
 import json
 import traceback
 from termcolor import colored
+from pprint import pprint as ppt
 
 def curl_check(cmd):
     dry_run = False
@@ -28,6 +29,7 @@ def curl_check(cmd):
                 return True, ''
             else:
                 print(colored('Debug: curl passed', 'red'))
+                ppt(r)
                 return True, json.dumps(r)
     except Exception as e:
         print(colored(f'Debug: curl dry run check failed: Exception: str({e}), trace_back: {traceback.format_exc()}', 'red'))
